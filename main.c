@@ -30,7 +30,11 @@ int main(int argc, char* argv[])
   int lines;
 
   lines = read(&pairdata,&prefix);
-  printf("after read\n");
+  
+  prefix.pattern = (int*)malloc(sizeof(int) * 20);
+  for(int i = 0; i < 20; i++) {
+	prefix.pattern[i] = -1;
+  }
   project(&pairdata,&prefix,lines);
 
 

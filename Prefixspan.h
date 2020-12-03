@@ -62,8 +62,11 @@ int read(struct Pairdata* pairdata,struct Prefix* prefix) {
 		struct Transaction transaction;
 		transaction.dataset = (int*)malloc(20 * sizeof(int));
 		while(token) {
-			transaction.dataset[count1] = atoi(token);
-			count1++;
+			int y = atoi(token);
+			if(y != 0) {
+				transaction.dataset[count1] = y;
+				count1++;
+			}
 			//printf("tokens   %d\n", atoi(token));
 			token = strtok(NULL, " ");
 		}
@@ -88,7 +91,7 @@ int read(struct Pairdata* pairdata,struct Prefix* prefix) {
 
 
 void print_pattern(struct Prefix* prefix, struct Pairdata* projected) {
-
+	
 	
 	for(int i = 0; i < 20 && prefix->pattern[i] != -1; i++) {
 		printf("%d ", prefix->pattern[i]);
@@ -103,85 +106,70 @@ void print_pattern(struct Prefix* prefix, struct Pairdata* projected) {
 	}
 
 	printf("): %d\n",count);
+	
 }	
 
 
-void pattern_add(struct Prefix* prefix,int key) {
-        //printf("pattern_add\n");
-	if(prefix->flag) {
-		
-                for(int i = 0; i < sizeof(struct Transaction);i++) {
+void pattern_add(struct Prefix* prefix,int key) {	
+                for(int i = 0; i < 20;i++) {
                         if(prefix->pattern[i] == -1) {
                                 prefix->pattern[i] = key;
                                 return;
                         }
                 }
-
-        } else {
-                prefix->flag = true;
-	
-                prefix->pattern = (int*)malloc(sizeof(int) * 20);
-                for(int i = 0; i < 20; i++) {
-                       	prefix->pattern[i] = -1;
-
-                }
-
-        }
         return;
-
-
 }
 
 void pattern_delete(struct Prefix* prefix) {
-        for(int i = 0; i < sizeof(struct Transaction);i++) {
-               if(prefix->pattern[i] == -1 && i != 0) {
-                        prefix->pattern[i-1] = -1;
-                        return;
+	int sum = 0;
+        for(int i = 0; i < 20;i++) {
+               if(prefix->pattern[i] != -1) {
+                        sum++;
                }
         }
+	if(sum == 0) {
+		return;
+	} else {
+		prefix->pattern[sum-1] = -1;
+	}
 }
 
 
-void database_copy(struct Pairdata* t1, struct Transaction* t2, int lines,int val) {
-	//printf("in the copy\n");	
+void database_copy(struct Pairdata* t1, struct Transaction* t2,int iid, int lines,int val) {
+	int sum = 0;
 	for(int i = 0; i < lines; i++) {
-		
+		if(t1->database[i].id != -1) {
+			sum++;
+		}
+
+	}
+
+	int i = sum;
+	//printf("available slot %d\n", i);
 		if(t1->database[i].id == -1) {
 			t1->indeces[i] = val;
-		
-			//printf("number of i %d\n",i);
-			struct Transaction transaction;
-		
+			struct Transaction transaction;	
 			transaction.dataset = (int*)malloc(20 * sizeof(int));
-			for(int j = 0; j < sizeof(struct Transaction) && t2->dataset[j] != 0;j++) {
-						
+			for(int j = 0; j < 20 && t2->dataset[j] != 0;j++) {
 				int tmp = t2->dataset[j];
-
-				//printf("value of tmp %d\n",tmp);
                 		transaction.dataset[j] = tmp;
 			}
-			transaction.id = t2->id;
+			transaction.id = iid;
 			t1->database[i] = transaction;
-			return;
-
-		} else {
-			return;
+			//printf("id after copy %d\n", t1->database[i].id);
+	
 		}
-		
-		
-	}
+			
+
 
 }
 
 
 void function(struct Pairdata *pairdata, struct Pairdata *projected,int i, int lines,int y) {
-		if(projected->database[i].id == -1) {
-			return;
-		}
-                     for(int j = projected->indeces[i]; j < sizeof(struct Transaction) && projected->database[i].dataset[j] != 0; j++) {
+                for(int j = projected->indeces[i]; j < 20 ; j++) {
                                 if(projected->database[i].dataset[j] == y) {
-                                        //printf("before copy\n");
-                                        database_copy(pairdata,&projected->database[i],lines,j+1);
+                                       // printf("id before copy %d   value of y%d\n", projected->database[i].id,y);
+                                        database_copy(pairdata,&projected->database[i],projected->database[i].id,lines,j+1);
                                         //printf("before break\n");
                                         return;
 
@@ -202,8 +190,13 @@ void project(struct Pairdata* projected,struct Prefix* prefix,int lines) {
 		//printf("11111111111\n");
 		print_pattern(prefix,projected);
 	}
-
-	if(prefix->max_pat != 0 && (int)(sizeof(prefix->pattern)/sizeof(prefix->pattern[0])) == prefix->max_pat)
+	int sum = 0;
+	for(int i = 0; i < 20; i++) {
+		if(prefix->pattern[i] != -1){
+			sum++;
+		}
+	}
+	if(prefix->max_pat != 0 && sum == prefix->max_pat)
 		return;
 
 	//printf("create map\n");	
@@ -242,19 +235,15 @@ void project(struct Pairdata* projected,struct Prefix* prefix,int lines) {
 			break;
 		}
 	}
-
-	//printf("after create map\n");
-	/*const char *key;
-	map_iter_t iter = map_iter(&map);
-	while((key = map_next(&map, &iter))) {
-		printf("key:%s    value:%d\n", key, *map_get(&map, key));
-	}
-	*/
-
 	struct Pairdata pairdata;
 	pairdata.database = (Transaction*)malloc(lines * sizeof(Transaction));
 	for(int i = 0; i < lines; i++) {
-		pairdata.database[i].id = -1;
+		struct Transaction tran;
+		tran.id = -1;
+		tran.dataset = (int*)malloc(sizeof(int) * 20);
+
+		pairdata.database[i] = tran;
+		//printf("initial id-value %d\n", pairdata.database[i].id);
 	}
 	pairdata.indeces = (int*)malloc(lines * sizeof(int*));
 	
@@ -266,43 +255,28 @@ void project(struct Pairdata* projected,struct Prefix* prefix,int lines) {
 
         while(key1 = map_next(&map, &iter1)) {
 		int y = atoi(key1);
-		//printf("in the first while %d\n", y);
 		for(int i = 0; i < lines; i++) {
 				
-		
-			function(&pairdata,projected,i,lines,y);
-			/*for(int j = projected->indeces[i]; j < sizeof(struct Transaction) && itemset[j] != 0; j++) {
-			//	printf("value of itemset[j] %d\n",itemset[j]);
-				if(itemset[j] == y) { 
-					printf("before copy\n");
-					database_copy(&pairdata,&projected->database[i],lines,j+1);
-					printf("before break\n");
-					return;
-					
-				}
-			}	
-	function(struct Pairdata *pairdata, struct Pairdata *projected,int i, int lines,int y) {
-				for(int j = projected->indeces[i]; j < sizeof(struct Transaction) && projected->database[i].dataset[j] != 0; j++) {
-				if(itemset[j] == y) {
-                                        printf("before copy\n");
-                                        database_copy(&pairdata,&projected->database[i],lines,j+1);
-                                        printf("before break\n");
-                                        return;
-
-                                }
-				}
-	}*/
+			if(projected->database[i].id != -1) {
+				function(&pairdata,projected,i,lines,y);
+			}
 		}
-		printf("before resurrsion\n");
+		
 		pattern_add(prefix, y);	
 		project(&pairdata,prefix,lines);
 		pattern_delete(prefix);
+		
+        	for(int i = 0; i < lines; i++) {
+                struct Transaction tran;
+                tran.id = -1;
+                tran.dataset = (int*)malloc(sizeof(int) * 20);
+
+                pairdata.database[i] = tran;
+                //printf("initial id-value %d\n", pairdata.database[i].id);
+        	}
+        	pairdata.indeces = (int*)malloc(lines * sizeof(int*));
 		//free(pairdata.database);
 		//free(pairdata.indeces);
-	//	map_deinit(&map);
-               
-
-
         }
         
 	
