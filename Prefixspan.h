@@ -180,9 +180,15 @@ void function(struct Pairdata *pairdata, struct Pairdata *projected,int i, int l
 
 void project(struct Pairdata* projected,struct Prefix* prefix,int lines) {
 	
-	if(lines < prefix->min_sup) {
+	int cal = 0;
+	for(int i = 0; i < lines; i++) {
+		if(projected->database[i].id != -1) {
+			cal++;
+		}
+	}	
+	if(cal < prefix->min_sup) {
 		
-		printf("wtf???? %d\n",prefix->min_sup);
+		//printf("wtf???? %d\n",prefix->min_sup);
 		return;
 	}
 	
