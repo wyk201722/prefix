@@ -1,4 +1,4 @@
-//#include "vector.h"
+#include <time.h>
 #include "map.h"
 #include "Prefixspan.h"
 #include <stdio.h>
@@ -19,30 +19,26 @@ int            max_pat              = 0;    // maximum_itemset_size : default in
 
 int main(int argc, char* argv[])
 {
-
+  clock_t t;
   Version();
- 
-  
+  t = clock();
+
   struct Prefix prefix;
   ParseParameters(argc, argv, &prefix);
-  
-  struct Pairdata pairdata;  
+
+  struct Pairdata pairdata;
   int lines;
 
   lines = read(&pairdata,&prefix);
-  
-  prefix.pattern = (int*)malloc(sizeof(int) * 20);
-  for(int i = 0; i < 20; i++) {
+
+  prefix.pattern = (int*)malloc(sizeof(int) * 13);
+  for(int i = 0; i < 13; i++) {
 	prefix.pattern[i] = -1;
   }
   project(&pairdata,&prefix,lines);
-
-
-  struct Transaction tmp;
- 
-  //project(pairdata,prefix); 
-  //Prefixspan prefixspan(min_sup, max_pat);
-  //prefixspan.run(filenames[0]);
+  t = clock() - t;
+  printf("No. of clicks %ld clicks (%f seconds).\n",
+           t, ((float)t) / CLOCKS_PER_SEC);
   return 0;
 
 }
@@ -66,7 +62,7 @@ void Usage(){
           printf("Additional arguments (at most one input file may be specified):\n");
         printf("       -min_sup [minimum support]\n");
         printf("       -max_pat [maximum pattern]\n");
-       
+
   exit(0);
 }
 
@@ -74,10 +70,10 @@ void Usage(){
  * ParseParameters
  *****************************************************************************/
 void ParseParameters (int argc, char* argv[],struct Prefix* prefix){
- 
+
   if (argc == 1) Usage();
   for (int argno = 1; argno < argc; argno++){
-   
+
     if (argv[argno][0] == '-'){
       if      (!strcmp (argv[argno], "-version")){
 	Version();
@@ -94,8 +90,7 @@ void ParseParameters (int argc, char* argv[],struct Prefix* prefix){
 	prefix->max_pat = atoi(argv[++argno]);
       }
     }
-    
+
   }
 
 }
-
